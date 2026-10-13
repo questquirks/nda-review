@@ -5,6 +5,8 @@
 * { box-sizing: border-box; }
 body { margin: 0; background: var(--desk); color: var(--ink); font-family: var(--font-sans), system-ui, sans-serif; font-size: 16px; line-height: 1.6; }
 main { max-width: 860px; margin: 0 auto; padding: 32px 20px 80px; }
+.top { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 4px; }
+.top h1 { margin: 0; }
 h1 { font-size: 28px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
 h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px; }
 p { margin: 0 0 12px; }
