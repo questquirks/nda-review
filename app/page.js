@@ -40,6 +40,17 @@ export default function Home() {
   const [edits, setEdits] = useState({});
   const [editing, setEditing] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [fileError, setFileError] = useState('');
+
+  function pickFile(f) {
+    if (!f) return;
+    if (!/\.(docx?|DOCX?)$/.test(f.name)) {
+      setFileError('รองรับเฉพาะไฟล์ Word (.docx หรือ .doc)');
+      return;
+    }
+    setFileError(''); setFile(f);
+  }
 
   const mark = (key, val) => setStages(s => ({ ...s, [key]: val }));
   const postureInfo = POSTURES.find(p => p.id === posture);
@@ -71,7 +82,7 @@ export default function Home() {
   }
 
   function reset() {
-    setStep('posture'); setFile(null); setResult(null); setError(''); setStages({});
+    setStep('posture'); setFile(null); setFileError(''); setResult(null); setError(''); setStages({});
   }
 
   const items = result ? [...result.items].sort((a, b) => ORDER.indexOf(a.status) - ORDER.indexOf(b.status)) : [];
@@ -137,10 +148,18 @@ export default function Home() {
         <section className="panel">
           <h2>อัปโหลด NDA</h2>
           <p>ฝั่งที่เลือก: <strong>{postureInfo.title}</strong> <button className="link" onClick={() => setStep('posture')}>เปลี่ยน</button></p>
-          <label className="drop">
-            <input type="file" accept=".docx" onChange={e => setFile(e.target.files?.[0] || null)} />
-            {file ? <strong>{file.name}</strong> : <>เลือกไฟล์ Word (.docx)</>}
+          <label
+            className={`drop ${dragging ? 'over' : ''}`}
+            onDragOver={e => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={e => { e.preventDefault(); setDragging(false); pickFile(e.dataTransfer.files?.[0]); }}
+          >
+            <input type="file" accept=".docx,.doc" onChange={e => pickFile(e.target.files?.[0])} />
+            {file
+              ? <><strong>{file.name}</strong><br /><span className="muted">ลากไฟล์อื่นมาวาง หรือคลิกเพื่อเปลี่ยน</span></>
+              : <>ลากไฟล์ Word มาวางที่นี่<br /><span className="muted">หรือคลิกเพื่อเลือกไฟล์ (.docx หรือ .doc)</span></>}
           </label>
+          {fileError && <div className="error">{fileError}</div>}
           <button className="btn" disabled={!file} onClick={run}>เริ่มรีวิว</button>
         </section>
       )}
