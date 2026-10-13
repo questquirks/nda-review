@@ -5,11 +5,11 @@ import { wordDiff, diffToHtml } from '@/lib/diff';
 // ข้อความหน้าเว็บทั้งหมด แยกภาษาไทย/อังกฤษ แก้ข้อความได้ที่นี่ที่เดียว
 const T = {
   th: {
-    subtitle: 'การรีวิว NDA เป็นไปตาม "หลักการพื้นฐานของสัญญาเท่านั้น" ผลลัพธ์เป็นเพียงร่าง และจำเป็นต้องให้ฝ่ายกฎหมายตรวจก่อนใช้งานเสมอ',
+    subtitle: 'รีวิว NDA ตาม "หลักการพื้นฐานของสัญญาเท่านั้น" ผลลัพธ์เป็นเพียงร่าง และจำเป็นต้องให้ฝ่ายกฎหมายตรวจก่อนใช้งานเสมอ',
     steps: ['เลือกฝั่ง', 'อัปโหลดสัญญา', 'รีวิวและตรวจซ้ำ', 'ผลลัพธ์'],
     stepsLabel: 'ขั้นตอน',
     postures: {
-      discloser: { title: 'เราเปิดเผยข้อมูลเป็นหลัก', desc: 'ปกป้องข้อมูลของเราให้เหมาะสม' },
+      discloser: { title: 'เราเปิดเผยข้อมูลเป็นหลัก', desc: 'คุ้มครองข้อมูลของเราให้เข้มที่สุด' },
       recipient: { title: 'เรารับข้อมูลเป็นหลัก', desc: 'ภาระต้องปฏิบัติได้จริงและไม่หนักเกินไป' },
       balanced: { title: 'เปิดเผยและรับพอๆ กัน', desc: 'ใช้มาตรฐานตลาด สมดุลทั้งสองฝ่าย' },
     },
@@ -36,6 +36,8 @@ const T = {
     acceptAll: 'รับทั้งหมด',
     copy: 'คัดลอก redline ที่รับ',
     copied: 'คัดลอกแล้ว',
+    download: 'ดาวน์โหลดรายงาน (Word)',
+    downloading: 'กำลังสร้างไฟล์…',
     newReview: 'รีวิวสัญญาใหม่',
     clause: 'ข้อ',
     quoteWarn: 'ไม่พบข้อความนี้ในสัญญาแบบตรงตัว กรุณาเทียบกับต้นฉบับเอง',
@@ -82,6 +84,8 @@ const T = {
     acceptAll: 'Accept all',
     copy: 'Copy accepted redlines',
     copied: 'Copied',
+    download: 'Download report (Word)',
+    downloading: 'Creating file…',
     newReview: 'Review another NDA',
     clause: 'Clause',
     quoteWarn: 'This text was not found verbatim in the contract. Please check against the original.',
@@ -115,6 +119,7 @@ export default function Home() {
   const [edits, setEdits] = useState({});
   const [editing, setEditing] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [fileError, setFileError] = useState('');
 
@@ -204,6 +209,19 @@ export default function Home() {
       await navigator.clipboard.writeText(plain);
     }
     setCopied(true); setTimeout(() => setCopied(false), 2500);
+  }
+
+  async function saveReport() {
+    setDownloading(true);
+    try {
+      const { downloadReport } = await import('@/lib/report');
+      await downloadReport({
+        ui, fileName: result.fileName, sideTitle: t.postures[result.posture].title,
+        statusLabels: t.status, order: ORDER, items, decisions, edits, uncovered: result.uncovered || [],
+      });
+    } finally {
+      setDownloading(false);
+    }
   }
 
   const stepIndex = { posture: 0, upload: 1, working: 2, results: 3 }[step];
@@ -302,6 +320,9 @@ export default function Home() {
             <button className="btn small ghost" onClick={() => setDecisions(Object.fromEntries(toFix.map(i => [i.id, 'accepted'])))}>{t.acceptAll}</button>
             <button className="btn small" disabled={!toFix.some(i => decisions[i.id] === 'accepted')} onClick={copyAccepted}>
               {copied ? t.copied : t.copy}
+            </button>
+            <button className="btn small ghost" disabled={downloading} onClick={saveReport}>
+              {downloading ? t.downloading : t.download}
             </button>
             <button className="btn small ghost" onClick={reset}>{t.newReview}</button>
           </div>
